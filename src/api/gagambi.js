@@ -18,43 +18,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Helper to ensure we always return arrays
-function ensureArray(data) {
-  if (Array.isArray(data)) return data;
-  if (data && Array.isArray(data.data)) return data.data;
-  if (data && Array.isArray(data.items)) return data.items;
-  if (data && Array.isArray(data.results)) return data.results;
-  return [];
-}
-
 export async function fetchEnrichments() {
-  try {
-    const res = await api.get('/api/v1/enrichments');
-    return ensureArray(res.data);
-  } catch (error) {
-    console.error('Error fetching enrichments:', error);
-    return [];
-  }
+  const res = await api.get('/api/v1/enrichments');
+  return Array.isArray(res.data) ? res.data : res.data?.data ?? [];
 }
 
 export async function fetchScrapedPosts() {
-  try {
-    const res = await api.get('/api/v1/scraped-posts');
-    return ensureArray(res.data);
-  } catch (error) {
-    console.error('Error fetching scraped posts:', error);
-    return [];
-  }
+  const res = await api.get('/api/v1/scraped-posts');
+  return Array.isArray(res.data) ? res.data : res.data?.data ?? [];
 }
 
 export async function fetchJudgeResults() {
-  try {
-    const res = await api.get('/api/v1/judge-results');
-    return ensureArray(res.data);
-  } catch (error) {
-    console.error('Error fetching judge results:', error);
-    return [];
-  }
+  const res = await api.get('/api/v1/judge-results');
+  return Array.isArray(res.data) ? res.data : res.data?.data ?? [];
 }
 
 export async function enrichPost(postId) {
@@ -71,6 +47,54 @@ export async function login(username, password) {
   if (res.data.access_token) {
     localStorage.setItem('token', res.data.access_token);
   }
+  return res.data;
+}
+
+// Dashboard specific endpoints
+export async function fetchDashboardMetrics(dateRange) {
+  const res = await api.get('/api/v1/dashboard/metrics', {
+    params: { range: dateRange }
+  });
+  return res.data;
+}
+
+export async function fetchTrendData(metric, dateRange) {
+  const res = await api.get(`/api/v1/dashboard/trends/${metric}`, {
+    params: { range: dateRange }
+  });
+  return res.data;
+}
+
+export async function fetchRecentActivity(limit = 10) {
+  const res = await api.get('/api/v1/dashboard/activity', {
+    params: { limit }
+  });
+  return res.data;
+}
+
+export async function fetchActiveJobs() {
+  const res = await api.get('/api/v1/jobs/active');
+  return res.data;
+}
+
+// Job management endpoints
+export async function startScrapeJob(config) {
+  const res = await api.post('/api/v1/jobs/scrape', config);
+  return res.data;
+}
+
+export async function startEnrichmentJob(config) {
+  const res = await api.post('/api/v1/jobs/enrichment', config);
+  return res.data;
+}
+
+export async function startScoringJob(config) {
+  const res = await api.post('/api/v1/jobs/scoring', config);
+  return res.data;
+}
+
+export async function getJobStatus(jobId) {
+  const res = await api.get(`/api/v1/jobs/${jobId}`);
   return res.data;
 }
 
