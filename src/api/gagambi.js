@@ -18,19 +18,43 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Helper to ensure we always return arrays
+function ensureArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.data)) return data.data;
+  if (data && Array.isArray(data.items)) return data.items;
+  if (data && Array.isArray(data.results)) return data.results;
+  return [];
+}
+
 export async function fetchEnrichments() {
-  const res = await api.get('/api/v1/enrichments');
-  return res.data;
+  try {
+    const res = await api.get('/api/v1/enrichments');
+    return ensureArray(res.data);
+  } catch (error) {
+    console.error('Error fetching enrichments:', error);
+    return [];
+  }
 }
 
 export async function fetchScrapedPosts() {
-  const res = await api.get('/api/v1/scraped-posts');
-  return res.data;
+  try {
+    const res = await api.get('/api/v1/scraped-posts');
+    return ensureArray(res.data);
+  } catch (error) {
+    console.error('Error fetching scraped posts:', error);
+    return [];
+  }
 }
 
 export async function fetchJudgeResults() {
-  const res = await api.get('/api/v1/judge-results');
-  return res.data;
+  try {
+    const res = await api.get('/api/v1/judge-results');
+    return ensureArray(res.data);
+  } catch (error) {
+    console.error('Error fetching judge results:', error);
+    return [];
+  }
 }
 
 export async function enrichPost(postId) {

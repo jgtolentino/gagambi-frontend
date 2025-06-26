@@ -8,7 +8,11 @@ function JudgeResults() {
 
   useEffect(() => {
     fetchJudgeResults()
-      .then(setResults)
+      .then(data => {
+        // Ensure we have an array
+        const safeData = Array.isArray(data) ? data : [];
+        setResults(safeData);
+      })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -23,6 +27,9 @@ function JudgeResults() {
   if (loading) return <div className="text-center py-4">Loading...</div>;
   if (error) return <div className="text-red-600 text-center py-4">Error: {error}</div>;
 
+  // Safe array operations
+  const validResults = Array.isArray(results) ? results : [];
+
   return (
     <div className="px-4 py-6 sm:px-0">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Judge Scoring Results</h1>
@@ -31,7 +38,7 @@ function JudgeResults() {
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <dt className="text-sm font-medium text-gray-500 truncate">Total Campaigns</dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">{results.length}</dd>
+            <dd className="mt-1 text-3xl font-semibold text-gray-900">{validResults.length}</dd>
           </div>
         </div>
         
@@ -39,8 +46,8 @@ function JudgeResults() {
           <div className="p-5">
             <dt className="text-sm font-medium text-gray-500 truncate">Average Delta</dt>
             <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {results.length > 0 
-                ? (results.reduce((sum, r) => sum + Math.abs(r.llm_score - r.human_score), 0) / results.length).toFixed(2)
+              {validResults.length > 0 
+                ? (validResults.reduce((sum, r) => sum + Math.abs((r.llm_score || 0) - (r.human_score || 0)), 0) / validResults.length).toFixed(2)
                 : '0.00'
               }
             </dd>
@@ -51,8 +58,8 @@ function JudgeResults() {
           <div className="p-5">
             <dt className="text-sm font-medium text-gray-500 truncate">Accuracy Rate</dt>
             <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {results.length > 0 
-                ? ((results.filter(r => Math.abs(r.llm_score - r.human_score) < 1).length / results.length) * 100).toFixed(1) + '%'
+              {validResults.length > 0 
+                ? ((validResults.filter(r => Math.abs((r.llm_score || 0) - (r.human_score || 0)) < 1).length / validResults.length) * 100).toFixed(1) + '%'
                 : '0%'
               }
             </dd>
@@ -76,21 +83,23 @@ function JudgeResults() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {results.length === 0 ? (
+                  {validResults.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                         No judge results found
                       </td>
                     </tr>
                   ) : (
-                    results.map((r, i) => {
-                      const delta = r.llm_score - r.human_score;
+                    validResults.map((r, i) => {
+                      const llmScore = r.llm_score || 0;
+                      const humanScore = r.human_score || 0;
+                      const delta = llmScore - humanScore;
                       return (
                         <tr key={i}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{r.campaign_name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.judge_name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.llm_score.toFixed(1)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.human_score.toFixed(1)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{r.campaign_name || 'N/A'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.judge_name || 'N/A'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{llmScore.toFixed(1)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{humanScore.toFixed(1)}</td>
                           <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getDeltaColor(delta)}`}>
                             {delta > 0 ? '+' : ''}{delta.toFixed(1)}
                           </td>
